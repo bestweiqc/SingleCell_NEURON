@@ -1,0 +1,190 @@
+load_file("nrngui.hoc")
+load_file("stdgui.hoc")
+load_file("LAcells_template.hoc")
+
+
+///// pyramidal graphs scale ////
+xmin_Pyr = 0
+xmax_Pyr = 2000
+ymin_Pyr = -80
+ymax_Pyr = 40
+
+///// simulation control ////
+secondorder = 2
+dt = 0.1
+steps_per_ms=10
+tstop = 1000//2000//800//1000//80500	// (ms)
+
+/////////////////////////
+// Cells Specification //
+/////////////////////////
+
+objref Cell
+Cell = new Cell_A()
+
+/////////////////////
+// Instrumentation //
+/////////////////////
+///// pyramidal current clamp ////
+delay_Pyr = 200		//(ms)
+duration_Pyr = 500//(ms)
+amplitude_Pyr = 0//400	//(pA)
+
+
+///// current clamp ////
+objref  ccl, cclA, cclB, cclC, cclI
+
+Cell.soma cclA = new currentclamp(0.5)
+cclA.del = delay_Pyr		// (ms)
+cclA.dur = duration_Pyr		// (ms)
+cclA.amp = amplitude_Pyr*1e-3	// (nA)
+
+celsius = 31
+v_init = -70
+
+
+
+/////////////////////////////////////////////////////////////
+/////////////////////   Synapse model   ////////////////////
+/////////////////////////////////////////////////////////////
+
+objref syn[3]
+objref nc[3]
+objref stim[2]
+
+stim[0] = new NetStim()       /// ================>>> used for excitatory synapses
+stim[0].start = 100
+stim[0].number = 20//20//50//3//15//10//5
+stim[0].interval = 25//25//25//200//50// for 40Hz  :change interval to 50 for 20Hz
+
+stim[1] = new NetStim()       /// ================>>> used for inhibitory synapses
+stim[1].start = 200
+stim[1].number = 50//20//10//5
+stim[1].interval = 10//25//50//100
+
+Cell.dend syn[0] = new tone2pyrV(0.5) // tone2pyrV(0.1) 0.1875 tone2pyrD_LAdv  // pyrD2pyrD_STFD // shock2pyrD
+nc[0] = new NetCon(stim[0],syn[0],0,0,1)
+syn[0].initW = 5//1//10
+
+//Cell.soma syn[1] = new shock2pyrD(0.5) // interD2pyrD_STFD
+//Cell.soma nc[1] = new NetCon(stim[0],syn[1],0,0,1)
+//syn[1].initW = 0.5//1//.09
+
+//Cell.soma[12] syn[2] = new tone2pyrV(0.5)
+//Cell.soma[12] nc[2] = new NetCon(stim[1],syn[2],0,0,1)
+//syn[2].initW = .01
+
+
+///////////////////////////////////////////////////////////////////////////////
+SubVBoxNum = 3//4
+objref MainHBoxObj,SubVBoxObj[SubVBoxNum]
+
+proc MainBox() { local i
+		MainHBoxObj = new HBox()
+		for i=0,SubVBoxNum-1 SubVBoxObj[i] = new VBox()
+		SubVBoxObj[0].intercept(1)
+			newPlotVoltage1()
+			newPlotVoltage2()
+			newPlotVoltage3()
+			//newPlotVoltage4()
+			//newPlotVoltage5()
+		SubVBoxObj[0].intercept(0)
+		SubVBoxObj[1].intercept(1)	
+			//newPlotVoltage6()   //////////////////////////////////////
+			//newPlotVoltage7()
+			//newPlotCurrent() 
+			//newPlotCurrent2()
+			nrnpointmenu(syn[0])
+			//nrnpointmenu(syn[1])
+		SubVBoxObj[1].intercept(0)
+		/*SubVBoxObj[2].intercept(1)
+			access Cell.soma
+			nrnsecmenu(.5,1)
+			access Cell.soma
+			nrnsecmenu(.5,1)		
+			access Cell.soma[12]
+			nrnsecmenu(.5,1)	
+			access Cell.soma[20]
+			nrnsecmenu(.5,1)	
+			access Cell.basal[21]
+			nrnsecmenu(.5,1)		
+		SubVBoxObj[2].intercept(0)*/
+		SubVBoxObj[2].intercept(1)
+			nrncontrolmenu()
+			xpanel(" ")
+				xbutton("QUIT","quit()")
+			xpanel(0)
+			//nrnpointmenu(cclA)
+			//nrnpointmenu(stim[0])
+			//nrnpointmenu(stim[1])
+			access Cell.soma
+			nrnsecmenu(.5,1)
+		SubVBoxObj[2].intercept(0)
+		MainHBoxObj.intercept(1)
+			for i=0,SubVBoxNum-1 SubVBoxObj[i].map()
+		MainHBoxObj.intercept(0)
+		MainHBoxObj.map("Re-Tune",10,25,800,600)
+}
+
+strdef tstr,tstr1
+
+proc newPlotVoltage1() {
+	newPlot(0,tstop,-100,50)
+	graphItem.save_name("graphList[0].")
+	graphList[0].append(graphItem)
+	graphItem.addexpr("Cell.soma.v(.5)",2,2)
+	graphItem.addexpr("Cell.dend.v(.5)",1,2)
+	graphItem.label(.08,.925,"mV")
+}
+proc newPlotVoltage2() {
+	newPlot(0,tstop,-100,50)
+	graphItem.save_name("graphList[0].")
+	graphList[0].append(graphItem)
+	graphItem.addexpr("Cell.dend.v(.5)")
+	graphItem.label(.08,.925,"mV")
+}
+proc newPlotVoltage3() {
+	newPlot(0,tstop,-100,50)
+	graphItem.save_name("graphList[0].")
+	graphList[0].append(graphItem)
+	graphItem.addexpr("Cell.p_dend.v(0.1)")
+	graphItem.label(.08,.925,"mV")
+}
+/* proc newPlotVoltage4() {
+	newPlot(0,tstop,-100,50)
+	graphItem.save_name("graphList[0].")
+	graphList[0].append(graphItem)
+	graphItem.addexpr("Cell.soma[20].v(0.5)")
+	graphItem.label(.08,.925,"mV")
+} 
+proc newPlotVoltage5() {
+	newPlot(0,tstop,-100,50)
+	graphItem.save_name("graphList[0].")
+	graphList[0].append(graphItem)
+	graphItem.addexpr("Cell.basal[21].v(.5)")
+	graphItem.label(.08,.925,"mV")
+} */
+
+
+////////////////////////////////////////
+proc newPlotVoltage6() {
+	newPlot(0,tstop,-100,50)
+	graphItem.save_name("graphList[0].")
+	graphList[0].append(graphItem)
+	graphItem.addexpr("Cell.soma.v(.5)",2,1)
+	//graphItem.addexpr("Cell.apical[3].v(0.5)")
+	graphItem.label(.08,.925,"mV")
+}
+
+/*proc newPlotVoltage7() {
+	newPlot(0,tstop,-100,50)
+	graphItem.save_name("graphList[0].")
+	graphList[0].append(graphItem)
+	graphItem.addexpr("Cell.soma[12].v(0.16667)")
+	graphItem.label(.08,.925,"mV")
+} */
+////////////////////////////////////////
+
+
+MainBox()
+run()
