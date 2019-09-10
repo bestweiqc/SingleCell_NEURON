@@ -7,7 +7,7 @@ This file is 8.6GB and will take some time to download. The file may also be ava
 
 3.Download the Pyramidal file
 
-4.complie the mod files, use the command line nrnivmodl Pyramidal
+4.complie the mod files, use the command line nrnivmodl Pyramidal,then move the x86_64 floder into Pyramidal floder.
 
 5.There are three kinds of model in the folder, one compartment(one-compartment.ipynb), three compartments (3-compartments.ipynb) and detailed cell(HTO&LTO.ipynb).
 
